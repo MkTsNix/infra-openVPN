@@ -1,0 +1,38 @@
+---
+ - name: 'Prepare stands RAS OpenVPN'
+   hosts: ras
+   become: true
+   gather_facts: true
+   vars:
+
+   tasks:
+     - name: 'Install required packages'
+       yum:
+         name:
+           - nano
+           - net-tools
+           - epel-release
+           - iperf3
+         state: present
+
+     - name: 'Install OpenVPN'
+       yum:
+         name:
+           - openvpn
+           - easy-rsa
+         state: present
+
+     - name: Disable SELinux
+       shell: setenforce 0
+
+     - name: 'Extract config and keys for openvpn'
+       unarchive:
+         src: ../templates/ras/openvpn_ras.tar
+         dest: /etc/openvpn
+
+     - name: 'Start OpenVPN server'
+       systemd:
+         name: openvpn@server
+         state: restarted
+         enabled: yes
+

@@ -1,0 +1,63 @@
+---
+ - name: 'Prepare stands OpenVPN'
+   hosts: taptun
+   become: true
+   gather_facts: true
+   vars:
+
+   tasks:
+     - name: 'Install required packages'
+       yum:
+         name:
+           - nano
+           - net-tools
+           - epel-release
+           - iperf3
+         state: present
+
+     - name: 'Install OpenVPN'
+       yum:
+         name: openvpn
+         state: present
+
+     - name: Disable SELinux
+       shell: setenforce 0
+
+     - name: 'Copy static.key from template'
+       template:
+         src: ../templates/static.key
+         dest: /etc/openvpn/static.key
+
+ - hosts: server
+   become: true
+   tasks:
+#     - name: 'Create flie key'
+#       shell: openvpn --genkey --secret /etc/openvpn/static.key
+
+     - name: 'Create OpenVpn server config'
+       template:
+         src: ../templates/server.conf.tap.j2
+         dest: /etc/openvpn/server.conf
+
+     - name: 'Start OpenVpn server'
+       systemd:
+         name: openvpn@server
+         state: restarted
+         enabled: yes
+
+ - hosts: client
+   become: true
+   tasks:
+       #     - name: 'Create flie key'
+       #       shell: openvpn --genkey --secret /etc/openvpn/static.key
+
+     - name: 'Create OpenVpn server config'
+       template:
+         src: ../templates/server_client.conf.tap.j2
+         dest: /etc/openvpn/server.conf
+
+     - name: 'Start OpenVpn server'
+       systemd:
+         name: openvpn@server
+         state: restarted
+         enabled: yes
